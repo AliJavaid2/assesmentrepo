@@ -246,7 +246,7 @@ If you want to [Free Admin Templates](https://themeselection.com/item/category/f
 - [FlyonUI](https://flyonui.com/)
 - [JetShip](https://demos.themeselection.com/jetship-laravel-starter-kit/)
 
-## Social Media :earth_africa: 
+## Social Media :earth_africa:
 
 - [X](https://x.com/Theme_Selection)
 - [Facebook](https://www.facebook.com/ThemeSelections/)
