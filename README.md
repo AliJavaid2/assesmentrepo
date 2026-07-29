@@ -254,3 +254,103 @@ If you want to [Free Admin Templates](https://themeselection.com/item/category/f
 - [Instagram](https://www.instagram.com/themeselection/)
 - [Discord](https://discord.com/invite/kBHkY7DekX)
 - [YouTube](https://www.youtube.com/channel/UCuryo5s0CW4aP83itLjIdZg)
+
+
+
+
+
+###########################################################################
+#############################################################################
+######################################################################
+
+
+Deployment Steps are Below
+
+########################################################################################
+#################################################################################
+#########################################################################################
+
+Laravel Sneat Application Deployment
+Guide
+Comprehensive Documentation &amp; CI/CD Setup for http://me.pseblabs.site
+1. Infrastructure &amp; Architecture Overview
+This document provides complete instructions for the automated CI/CD pipeline, web application
+hosting architecture, and server troubleshooting steps for the Laravel Sneat platform.
+ Application Framework: Laravel 12.x running on PHP 8.5
+ Web Server: Nginx / Apache web server on Ubuntu 24.04 LTS
+ Cloud Provider: Amazon Web Services (AWS)
+ EC2 Compute: EBS volume expanded to 80GB root disk
+ Database: Amazon RDS MySQL Instance
+ CI/CD Pipeline: AWS CodePipeline, AWS CodeBuild, AWS CodeDeploy
+2. CI/CD Pipeline Workflow
+Source Stage
+Connected via GitHub App to the assesmentrepo repository (main branch). Triggers automatic
+deployment builds on push.
+Build Stage (AWS CodeBuild)
+Executes within an Ubuntu Standard managed image using the root buildspec.yml specification to install
+dependencies and package artifacts.
+Deploy Stage (AWS CodeDeploy)
+Deploys build artifacts in-place to the target EC2 web server using AWS CodeDeploy agent.
+3. Deployment Specification Files
+buildspec.yml (AWS CodeBuild)
+version: 0.2
+phases:
+install:
+runtime-versions:
+
+php: 8.3
+commands:
+- composer install --no-dev --prefer-dist --optimize-autoloader
+build:
+commands:
+- echo Build completed on `date`
+artifacts:
+files:
+- &#39;**/*&#39;
+
+appspec.yml (AWS CodeDeploy)
+version: 0.0
+os: linux
+files:
+- source: /
+destination: /var/www/assesmentrepo
+hooks:
+AfterInstall:
+- location: scripts/deploy.sh
+timeout: 300
+runas: root
+
+scripts/deploy.sh (Post-Deployment Executable)
+#!/bin/bash
+cd /var/www/assesmentrepo
+# Set proper ownership and file permissions
+sudo chown -R www-data:www-data /var/www/assesmentrepo
+sudo chmod -R 775 storage bootstrap/cache
+# Clear and optimize application caches
+php artisan config:clear
+php artisan cache:clear
+php artisan view:clear
+php artisan route:clear
+# Execute database migrations
+php artisan migrate --force
+
+4. Troubleshooting &amp; Operational Procedures
+Issue 1: CodeDeploy &#39;No space left on device&#39;
+To expand the root EBS partition after extending capacity in the AWS Console:
+# Grow the partition to fill available EBS volume space
+
+sudo growpart /dev/nvme0n1 1
+# Resize the ext4 filesystem
+sudo resize2fs /dev/nvme0n1p1
+# Verify new capacity
+df -h /
+
+Issue 2: Database Connection Refused (AWS RDS)
+When encountering SQLSTATE[HY000] [2002] connection errors, perform the following steps:
+ 1. Database Host: Verify .env file contains the exact RDS Endpoint hostname in DB_HOST.
+ 2. Security Group Rules: Configure the RDS Security Group Inbound Rule to accept TCP port 3306
+from the EC2 instance Security Group.
+ 3. Reset Application State: Execute migration and cache commands on the server terminal:
+php artisan config:clear
+php artisan migrate --force
+sudo systemctl restart codedeploy-agent
